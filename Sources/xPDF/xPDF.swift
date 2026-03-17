@@ -1,4 +1,6 @@
+import PDFKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 @main
 struct xPDF: App {
@@ -8,7 +10,104 @@ struct xPDF: App {
     }
     var body: some Scene {
         WindowGroup {
-
+            ContentView()
         }
+    }
+}
+
+struct ContentView: View {
+    @State private var importing = false
+    @State private var document: PDFDocument?
+
+    var body: some View {
+        NavigationSplitView {
+            Button("Import") {
+                importing = true
+            }.fileImporter(
+                isPresented: $importing,
+                allowedContentTypes: [.pdf],
+                allowsMultipleSelection: false
+            ) { result in
+                let url = try! result.get()[0]
+                document = PDFDocument(url: url)
+            }
+        } detail: {
+            if let document = document, let documentURL = document.documentURL {
+                Text("Path:\(documentURL.path(percentEncoded: false))")
+                Text("Number of page:\(document.pageCount)")
+                Button("Export") {
+                    let downloadsURL = try! FileManager.default.url(
+                        for: .downloadsDirectory,
+                        in: .userDomainMask,
+                        appropriateFor: nil,
+                        create: false
+                    )
+
+                    let directoryURL =
+                        downloadsURL.appending(component: "xPDF")
+                        .appending(component: UUID().uuidString)
+
+                    try! FileManager.default
+                        .createDirectory(
+                            at: directoryURL,
+                            withIntermediateDirectories: true
+                        )
+
+                    for i in 0..<document.pageCount {
+                        writePage(
+                            page: document.page(at: i)!,
+                            url: directoryURL.appending(
+                                component: "\(i+1).png"
+                            )
+                        )
+                    }
+                    NSWorkspace.shared.open(directoryURL)
+                }
+            }
+        }
+    }
+}
+
+func writePage(page: PDFPage, url: URL) {
+    page.toCGImage(scale: 4.0)
+        .saveAsPNG(url: url)
+}
+
+extension PDFPage {
+    func toCGImage(scale: CGFloat) -> CGImage {
+        let rect = self.bounds(for: .mediaBox)
+        return self.toCGImage(
+            width: Int(rect.width * scale),
+            height: Int(rect.height * scale),
+            scale: scale
+        )
+    }
+
+    func toCGImage(width: Int, height: Int, scale: CGFloat) -> CGImage {
+        let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 4 * width,
+            space: CGColorSpace(name: CGColorSpace.sRGB),
+            bitmapInfo: CGBitmapInfo(alpha: CGImageAlphaInfo.premultipliedLast)
+        )!
+        context.scaleBy(x: scale, y: scale)
+        self.draw(with: .mediaBox, to: context)
+        return context.makeImage()!
+    }
+}
+
+extension CGImage {
+    func saveAsPNG(url: URL) {
+        let imageDestination = CGImageDestinationCreateWithURL(
+            url as CFURL,
+            UTType.png.identifier as CFString,
+            1,
+            nil
+        )!
+        CGImageDestinationAddImage(imageDestination, self, nil)
+        CGImageDestinationFinalize(imageDestination)
     }
 }
