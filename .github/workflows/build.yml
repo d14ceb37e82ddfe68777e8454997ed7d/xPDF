@@ -18,6 +18,7 @@ jobs:
         swift build -c release
         mkdir -p xPDF.app/Contents/MacOS
         cp .build/arm64-apple-macosx/release/xPDF xPDF.app/Contents/MacOS/
+        tar -cJf xPDF.app.tar.xz xPDF.app
     - uses: actions/upload-artifact@v7
       with:
-        path: xPDF.app
+        path: xPDF.app.tar.xz
