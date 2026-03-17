@@ -30,7 +30,10 @@ struct ContentView: View {
                 allowsMultipleSelection: false
             ) { result in
                 let url = try! result.get()[0]
-                document = PDFDocument(url: url)
+                if url.startAccessingSecurityScopedResource() {
+                    document = PDFDocument(url: url)
+                    url.stopAccessingSecurityScopedResource()
+                }
             }
         } detail: {
             if let document = document, let documentURL = document.documentURL {
