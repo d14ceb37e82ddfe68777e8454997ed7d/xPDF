@@ -1,0 +1,20 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: macos-26
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Build
+      run: swift build -c release
+    - uses: actions/upload-artifact@v7
+      with:
+        path: .build/arm64-apple-macosx/release/xPDF
