@@ -18,6 +18,7 @@ struct xPDF: App {
 struct ContentView: View {
     @State private var importing = false
     @State private var document: PDFDocument?
+    @State private var scale = 4.0
 
     var body: some View {
         NavigationSplitView {
@@ -33,44 +34,51 @@ struct ContentView: View {
             }
         } detail: {
             if let document = document, let documentURL = document.documentURL {
-                Text("Path:\(documentURL.path(percentEncoded: false))")
-                Text("Number of page:\(document.pageCount)")
-                Button("Export") {
-                    let downloadsURL = try! FileManager.default.url(
-                        for: .downloadsDirectory,
-                        in: .userDomainMask,
-                        appropriateFor: nil,
-                        create: false
-                    )
-
-                    let directoryURL =
-                        downloadsURL.appending(component: "xPDF")
-                        .appending(component: UUID().uuidString)
-
-                    try! FileManager.default
-                        .createDirectory(
-                            at: directoryURL,
-                            withIntermediateDirectories: true
-                        )
-
-                    for i in 0..<document.pageCount {
-                        writePage(
-                            page: document.page(at: i)!,
-                            url: directoryURL.appending(
-                                component: "\(i+1).png"
-                            )
-                        )
+                VStack {
+                    Text("Path:\(documentURL.path(percentEncoded: false))")
+                    Text("Number of page:\(document.pageCount)")
+                    HStack {
+                        Text("Scale:\(scale)")
+                        Slider(value: $scale, in: 1...8, step: 0.5)
                     }
-                    NSWorkspace.shared.open(directoryURL)
-                    self.document = nil
+                    Button("Export") {
+                        let downloadsURL = try! FileManager.default.url(
+                            for: .downloadsDirectory,
+                            in: .userDomainMask,
+                            appropriateFor: nil,
+                            create: false
+                        )
+
+                        let directoryURL =
+                            downloadsURL.appending(component: "xPDF")
+                            .appending(component: UUID().uuidString)
+
+                        try! FileManager.default
+                            .createDirectory(
+                                at: directoryURL,
+                                withIntermediateDirectories: true
+                            )
+
+                        for i in 0..<document.pageCount {
+                            writePage(
+                                page: document.page(at: i)!,
+                                url: directoryURL.appending(
+                                    component: "\(i+1).png"
+                                ),
+                                scale: scale
+                            )
+                        }
+                        NSWorkspace.shared.open(directoryURL)
+                        self.document = nil
+                    }
                 }
             }
         }
     }
 }
 
-func writePage(page: PDFPage, url: URL) {
-    page.toCGImage(scale: 4.0)
+func writePage(page: PDFPage, url: URL, scale: CGFloat) {
+    page.toCGImage(scale: scale)
         .saveAsPNG(url: url)
 }
 
