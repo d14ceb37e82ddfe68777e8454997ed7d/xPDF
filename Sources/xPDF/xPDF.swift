@@ -62,6 +62,7 @@ struct ContentView: View {
                         )
                     }
                     NSWorkspace.shared.open(directoryURL)
+                    self.document = nil
                 }
             }
         }
