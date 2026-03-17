@@ -39,7 +39,7 @@ struct ContentView: View {
             if let document = document, let documentURL = document.documentURL {
                 VStack {
                     Text("Path:\(documentURL.path(percentEncoded: false))")
-                    Text("Number of page:\(document.pageCount)")
+                    Text("Number of pages:\(document.pageCount)")
                     HStack {
                         Text("Scale:\(scale)")
                         Slider(value: $scale, in: 1...8, step: 0.5)
