@@ -18,7 +18,7 @@ jobs:
         install -m 0755 .build/arm64-apple-macosx/release/xPDF xPDF.app/Contents/MacOS/
         install -m 0644 Info.plist xPDF.app/Contents/
         codesign -f -o runtime -s - --entitlements entitlements.plist xPDF.app
-        tar -cJf xPDF.app.tar.xz xPDF.app
+        tar -cf xPDF.app.tar xPDF.app
     - uses: actions/upload-artifact@v7
       with:
-        path: xPDF.app.tar.xz
+        path: xPDF.app.tar
